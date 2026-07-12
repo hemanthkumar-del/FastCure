@@ -1,138 +1,169 @@
-# FastCure - Clinical Operations & AI Health Assistant
+# FastCure
 
-FastCure is a modern, responsive, production-ready healthcare management application built with **Flutter (Material 3)** and **Firebase (Firestore & Storage)**. It integrates automated patient workflows, pharmacy stock management, clinical invoicing, scheduling engines, and an intelligent **AI symptom checker & drug advisory chatbot** powered by Google Gemini.
+[![Flutter](https://img.shields.io/badge/Flutter-v3.44.4--stable-blue.svg?logo=flutter)](https://flutter.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-Services-orange.svg?logo=firebase)](https://firebase.google.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/hemanthkumar-del/FastCure.svg?style=social)](https://github.com/hemanthkumar-del/FastCure)
 
----
-
-## 🚀 Key Modules & Features
-
-1. **Authentication Suite**: Dynamic onboarding with Email/Password and Google Sign-In, profile validation, forgot password flow, and automatic login caching.
-2. **Dashboard Analytics**: M3 landing panel displaying statistics (Total Doctors, Registered Patients, Today's Appointments, Net Earnings) loaded via live Firestore streams. Includes custom painted circular pie charts and monthly financial bar charts.
-3. **Doctor Directory**: Manage doctor listings with consulting fields, qualifications, fee setups, specialty filters, and profile photo uploads to Firebase Storage.
-4. **Patient Directory**: Comprehensive patient profile management, covering demographics, age, address, blood group, allergies wrap, and medical history.
-5. **Appointment Scheduling**: Form scheduler matching live doctor/patient profiles. Features calendar date filters, booking time slot chips, and instant Doctor approval/rejection actions.
-6. **Pharmacy Inventory**: Live inventory dashboard showing stock counts, warning alerts (stock <= 20) in red, and search features.
-7. **Medication Prescriptions**: Issuing panel supporting multiple medicine additions, automatic quantity bounds checks, and mock PDF invoice printing actions.
-8. **Clinical Invoicing & Billing**: Cost breakdown tables (doctor fees, medicine fees, lab tests), automatic totals calculation, payment method selectors (Cash, Card, UPI, Insurance), and status paid toggle.
-9. **AI Health Assistant**: Empathetic conversational clinical assistant utilizing direct Gemini 1.5 HTTP API queries. Falls back to a local rules symptom-checker and medicine reference book when offline or key is unconfigured. Saves histories to SharedPreferences.
+FastCure is a production-grade Clinical & Hospital Operations Management System built using **Flutter (Material 3)** and **Firebase**.
 
 ---
 
-## 📂 Project Directory Structure & Architecture
+## Features
 
-FastCure implements a Clean Architectural style separating core services, configurations, and feature domains:
+- **Firebase Authentication**: Dynamic onboarding validation and session caching.
+- **Google Sign-In**: Integrated social login workflows.
+- **Doctor Management**: Profiles directory, specialization choices, and fees setup.
+- **Patient Management**: Profiles listing, allergy wrapper chips, and medical history trackers.
+- **Appointment Booking**: Form scheduler matching active lists, calendar filters, and instant action approvals.
+- **Prescription Management**: Issue drugs builder checking stock levels in real time.
+- **Medicine Inventory**: Live pharmacy stock trackers with red alerts for low items.
+- **Billing System**: Cost summation tables, paid toggles, and payment method modals.
+- **Dashboard Analytics**: M3 metrics grid panels, Circular Pie charts, and Monthly earnings Bar graphs.
+- **Firebase Cloud Messaging**: Integrated token authorization and messaging services.
+- **Firebase Storage**: Photo profile uploads targeting doctor buckets.
+- **Material 3 UI**: Premium responsive components, micro-animations, and theme configs.
+- **Provider State Management**: Clean ChangeNotifier decoupling presentation and repos.
+- **Offline Firestore Cache**: Native offline persistent caches supporting network drops.
+
+---
+
+## Technology Stack
+
+*   **UI/Core**: Flutter & Dart (Material 3)
+*   **Database**: Cloud Firestore
+*   **Authentication**: Firebase Authentication
+*   **Storage**: Firebase Storage
+*   **Push Messages**: Firebase Cloud Messaging (FCM)
+*   **State Management**: Provider
+*   **VCS/Hosting**: Git & GitHub
+
+---
+
+## Project Architecture
+
+FastCure applies a clean separation of concerns split into layers:
+
+*   **Presentation Layer**: User interfaces consisting of stateless/stateful Flutter widgets listening to state changes.
+*   **State Management (Provider)**: Interacts with repositories to fetch/save data and notifies listeners to redraw components.
+*   **Domain Layer (Repository contracts)**: Abstract definitions separating core logic from network modules.
+*   **Data Layer (Repository implementations)**: Connects to underlying database frameworks, maps models, and parses errors.
+*   **Service Layer**: Singleton wrappers managing third-party initializations (`FirebaseService`, `AIService`).
+
+---
+
+## Folder Structure
 
 ```text
 lib/
 ├── core/
-│   ├── constants/       # AppColors, AppStrings, AppConstants definitions
-│   ├── routes/          # AppRouter, AppRoutes configurations
-│   ├── services/        # FirebaseService, AIService (Gemini endpoints)
-│   ├── theme/           # AppTheme Light/Dark modes
-│   └── utils/           # Logger utilities
+│   ├── constants/       # Global constants (colors, layouts, strings)
+│   ├── routes/          # Static paths and AppRouter fade routes
+│   ├── services/        # Firebase configuration singletons and AI calls
+│   ├── theme/           # Color palettes matching Material 3 rules
+│   └── utils/           # Custom AppLogger
 └── features/
-    ├── ai/              # ChatMessage model, ChatProvider, Chat bubble views
-    ├── appointment/     # Book appointment form, list calendars
-    ├── auth/            # AuthRepository, AuthProvider, Login/Register screens
-    ├── billing/         # BillModel, BillProvider, Invoices details tables
-    ├── dashboard/       # Stat cards, PieChart, BarChart dashboard
-    ├── doctor/          # Doctor list and details collapsing silver app bars
-    ├── medicine/        # Pharmacy inventory tables and item edit forms
-    ├── patient/         # Demographics profiles, allergies wrap, CRUD repo
-    ├── prescription/    # Issuing prescriptions, drug items table
-    ├── profile/         # Settings profile screen
-    ├── settings/        # Mode selectors
-    └── splash/          # Splash animation entry
+    ├── ai/              # AI Health Chatbot module
+    ├── appointment/     # Appointment scheduler module
+    ├── auth/            # Authentication flow controllers
+    ├── billing/         # Billing invoices calculators
+    ├── dashboard/       # Main overview screen and custom charts
+    ├── doctor/          # Doctors directories and profiles
+    ├── medicine/        # Pharmacy inventory tables
+    ├── patient/         # Patients medical directories
+    ├── prescription/    # Prescribing drug wizards
+    ├── profile/         # Profile edits screen
+    ├── settings/        # App modes setup
+    └── splash/          # Splash animation launcher
 ```
 
 ---
 
-## 🏛️ Core API Data Schemas
+## Screenshots
 
-### 1. Doctor Model (`doctors` collection)
-*   `doctorId`: String (Unique document ID)
-*   `fullName`: String
-*   `email`: String
-*   `phoneNumber`: String
-*   `specialization`: String
-*   `qualification`: String
-*   `experience`: Integer (years)
-*   `consultationFee`: Double
-*   `hospitalName`: String
-*   `department`: String
-*   `bio`: String
-*   `profileImage`: String (Firebase Storage URL)
-*   `availableDays`: List<String>
-*   `availableTimeSlots`: List<String>
-*   `status`: String (Active/Inactive)
+Below are placeholders illustrating FastCure UI layouts. Real screenshots will be updated following staging uploads:
 
-### 2. Patient Model (`patients` collection)
-*   `patientId`: String
-*   `fullName`: String
-*   `email`: String
-*   `phone`: String
-*   `gender`: String
-*   `dob`: DateTime
-*   `bloodGroup`: String
-*   `address`: String
-*   `medicalHistory`: List<String>
-*   `allergies`: List<String>
-*   `profileImage`: String
-
-### 3. Appointment Model (`appointments` collection)
-*   `appointmentId`: String
-*   `doctorId`: String
-*   `patientId`: String
-*   `date`: DateTime (Timestamp)
-*   `time`: String (time slot)
-*   `status`: String (Pending / Approved / Cancelled / Rejected)
-*   `reason`: String
-*   `notes`: String
-*   `createdAt`: DateTime
-
-### 4. Bill Model (`bills` collection)
-*   `billId`: String
-*   `patientId`: String
-*   `appointmentId`: String
-*   `doctorFee`: Double
-*   `medicineFee`: Double
-*   `labFee`: Double
-*   `total`: Double (Sum of doctorFee + medicineFee + labFee)
-*   `paymentMethod`: String (Cash / Card / UPI / Insurance)
-*   `status`: String (Pending / Paid)
-*   `createdAt`: DateTime
+| Module / View | UI Mockup Placeholder |
+| :--- | :--- |
+| **Splash Screen** | `![Splash Screen](docs/screenshots/splash_placeholder.png)` |
+| **Login View** | `![Login Screen](docs/screenshots/login_placeholder.png)` |
+| **Dashboard** | `![Dashboard Screen](docs/screenshots/dashboard_placeholder.png)` |
+| **Doctor Module** | `![Doctor Directory](docs/screenshots/doctor_placeholder.png)` |
+| **Patient Module** | `![Patient Directory](docs/screenshots/patient_placeholder.png)` |
+| **Appointment Module** | `![Appointment Booking](docs/screenshots/appointment_placeholder.png)` |
+| **Billing System** | `![Billing Details](docs/screenshots/billing_placeholder.png)` |
+| **AI Assistant** | `![AI Chat Screen](docs/screenshots/ai_chat_placeholder.png)` |
 
 ---
 
-## ⚙️ Running & Building
+## Installation
 
-### 1. Prerequisites
-*   Flutter SDK (^3.44.4-stable)
-*   Java JDK 17
-*   Android SDK
+To run FastCure locally on your workstation, follow these steps:
 
-### 2. Running in Debug Mode
-To run the debug application on an emulator or connected device:
-```bash
-flutter run
-```
+1.  **Clone the Repository**:
+    ```bash
+    git clone https://github.com/hemanthkumar-del/FastCure.git
+    cd FastCure
+    ```
+2.  **Download Dependencies**:
+    ```bash
+    flutter pub get
+    ```
+3.  **Run the App**:
+    ```bash
+    flutter run
+    ```
 
-### 3. Running Unit Tests
-To run unit test suites:
-```bash
-flutter test
-```
+---
 
-### 4. Compiling Production APK
-Generates a signed standalone release APK:
+## Firebase Setup
+
+To connect your own Firebase environment to this project:
+
+1.  Create a project on the [Firebase Console](https://console.firebase.google.com).
+2.  Install the FlutterFire CLI globally and log in:
+    ```bash
+    dart pub global activate flutterfire_cli
+    flutterfire configure
+    ```
+3.  Ensure your generated `google-services.json` is placed inside `android/app/`.
+4.  Configure the following services on Firebase Console:
+    *   **Firebase Authentication**: Enable Email/Password and Google login providers.
+    *   **Cloud Firestore**: Start in test mode, then deploy security rules.
+    *   **Firebase Storage**: Configure default storage buckets for profile photos.
+
+---
+
+## Build
+
+To compile release builds, run the following Flutter compiler commands:
+
+### 1. Production APK
+Generates a signed standalone Android APK:
 ```bash
 flutter build apk --release
 ```
-Output path: `build/app/outputs/flutter-apk/app-release.apk`
+*   Output path: `build/app/outputs/flutter-apk/app-release.apk`
 
-### 5. Compiling Android App Bundle (AAB)
-Generates the final optimized release App Bundle ready for Google Play Store upload:
+### 2. Production App Bundle (AAB)
+Generates the Google Play Store optimized upload bundle:
 ```bash
 flutter build appbundle
 ```
-Output path: `build/app/outputs/bundle/release/app-release.aab`
+*   Output path: `build/app/outputs/bundle/release/app-release.aab`
+
+---
+
+## Future Enhancements
+
+*   **Telemedicine**: Secure peer-to-peer webRTC video consult integrations.
+*   **Lab Integrations**: PDF scanning, parsing, and storing lab diagnostic reports.
+*   **Payment Channels**: Direct digital wallet payment gateways (Razorpay, Stripe).
+*   **AI Diagnosis Model**: Advanced custom model analysis linking patient symptoms.
+*   **Wearable Integration**: Syncing real-time heart rate and activity metrics from smartwatches.
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
