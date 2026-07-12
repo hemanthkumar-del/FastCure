@@ -2,9 +2,8 @@ import '../../data/models/appointment_model.dart';
 
 abstract class AppointmentRepository {
   Future<List<AppointmentModel>> getAppointments();
-  Future<List<AppointmentModel>> getAppointmentsForUser(String patientId);
-  Future<AppointmentModel?> getAppointmentById(String id);
+  Future<AppointmentModel?> getAppointmentById(String appointmentId);
   Future<void> createAppointment(AppointmentModel appointment);
   Future<void> updateAppointment(AppointmentModel appointment);
-  Future<void> deleteAppointment(String id);
+  Future<void> deleteAppointment(String appointmentId);
 }

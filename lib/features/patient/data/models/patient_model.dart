@@ -1,58 +1,110 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class PatientModel {
-  final String id;
-  final String name;
+  final String patientId;
+  final String fullName;
   final String email;
   final String phone;
-  final String dateOfBirth;
+  final String gender;
+  final DateTime dob;
   final String bloodGroup;
   final String address;
-  final String emergencyContactName;
-  final String emergencyContactPhone;
+  final List<String> medicalHistory;
   final List<String> allergies;
-  final List<String> medicalConditions;
+  final String? profileImage;
+  final DateTime? createdAt;
 
   PatientModel({
-    required this.id,
-    required this.name,
+    required this.patientId,
+    required this.fullName,
     required this.email,
     required this.phone,
-    required this.dateOfBirth,
+    required this.gender,
+    required this.dob,
     required this.bloodGroup,
     required this.address,
-    required this.emergencyContactName,
-    required this.emergencyContactPhone,
+    required this.medicalHistory,
     required this.allergies,
-    required this.medicalConditions,
+    this.profileImage,
+    this.createdAt,
   });
 
-  factory PatientModel.fromMap(Map<String, dynamic> map, String patientId) {
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    return DateTime.now();
+  }
+
+  factory PatientModel.fromMap(Map<String, dynamic> map, String id) {
+    // Gracefully handle medical history if saved as a raw string or list
+    List<String> parsedHistory = [];
+    if (map['medicalHistory'] is List) {
+      parsedHistory = List<String>.from(map['medicalHistory']);
+    } else if (map['medicalHistory'] is String && map['medicalHistory'].toString().trim().isNotEmpty) {
+      parsedHistory = [map['medicalHistory']];
+    }
+
     return PatientModel(
-      id: patientId,
-      name: map['name'] ?? '',
+      patientId: id,
+      fullName: map['fullName'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'] ?? '',
-      dateOfBirth: map['dateOfBirth'] ?? '',
+      gender: map['gender'] ?? 'Male',
+      dob: _parseDateTime(map['dob']),
       bloodGroup: map['bloodGroup'] ?? '',
       address: map['address'] ?? '',
-      emergencyContactName: map['emergencyContactName'] ?? '',
-      emergencyContactPhone: map['emergencyContactPhone'] ?? '',
+      medicalHistory: parsedHistory,
       allergies: List<String>.from(map['allergies'] ?? []),
-      medicalConditions: List<String>.from(map['medicalConditions'] ?? []),
+      profileImage: map['profileImage'],
+      createdAt: map['createdAt'] != null ? _parseDateTime(map['createdAt']) : null,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'name': name,
+      'patientId': patientId,
+      'fullName': fullName,
       'email': email,
       'phone': phone,
-      'dateOfBirth': dateOfBirth,
+      'gender': gender,
+      'dob': Timestamp.fromDate(dob),
       'bloodGroup': bloodGroup,
       'address': address,
-      'emergencyContactName': emergencyContactName,
-      'emergencyContactPhone': emergencyContactPhone,
+      'medicalHistory': medicalHistory,
       'allergies': allergies,
-      'medicalConditions': medicalConditions,
+      'profileImage': profileImage,
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
     };
+  }
+
+  PatientModel copyWith({
+    String? patientId,
+    String? fullName,
+    String? email,
+    String? phone,
+    String? gender,
+    DateTime? dob,
+    String? bloodGroup,
+    String? address,
+    List<String>? medicalHistory,
+    List<String>? allergies,
+    String? profileImage,
+    DateTime? createdAt,
+  }) {
+    return PatientModel(
+      patientId: patientId ?? this.patientId,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      gender: gender ?? this.gender,
+      dob: dob ?? this.dob,
+      bloodGroup: bloodGroup ?? this.bloodGroup,
+      address: address ?? this.address,
+      medicalHistory: medicalHistory ?? this.medicalHistory,
+      allergies: allergies ?? this.allergies,
+      profileImage: profileImage ?? this.profileImage,
+      createdAt: createdAt ?? this.createdAt,
+    );
   }
 }

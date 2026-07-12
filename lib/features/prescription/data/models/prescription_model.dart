@@ -1,87 +1,127 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class PrescriptionItem {
-  final String medicineName;
-  final String frequency; // e.g. "Once daily"
-  final String timing;    // e.g. "Bedtime"
-  final String duration;  // e.g. "30 Days"
+  final String medicineId;
+  final String name;
+  final String dosage;      // e.g. "1 Tablet morning, 1 night after food"
+  final int quantity;       // e.g. 10
 
   PrescriptionItem({
-    required this.medicineName,
-    required this.frequency,
-    required this.timing,
-    required this.duration,
+    required this.medicineId,
+    required this.name,
+    required this.dosage,
+    required this.quantity,
   });
 
   factory PrescriptionItem.fromMap(Map<String, dynamic> map) {
     return PrescriptionItem(
-      medicineName: map['medicineName'] ?? '',
-      frequency: map['frequency'] ?? '',
-      timing: map['timing'] ?? '',
-      duration: map['duration'] ?? '',
+      medicineId: map['medicineId'] ?? '',
+      name: map['name'] ?? '',
+      dosage: map['dosage'] ?? '',
+      quantity: (map['quantity'] ?? 1) as int,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'medicineName': medicineName,
-      'frequency': frequency,
-      'timing': timing,
-      'duration': duration,
+      'medicineId': medicineId,
+      'name': name,
+      'dosage': dosage,
+      'quantity': quantity,
     };
   }
 }
 
 class PrescriptionModel {
-  final String id;
+  final String prescriptionId;
   final String doctorId;
-  final String doctorName;
-  final String doctorSpecialty;
   final String patientId;
-  final String patientName;
-  final DateTime dateIssued;
-  final String diagnosis;
-  final List<PrescriptionItem> medications;
+  final String appointmentId;
+  final List<PrescriptionItem> medicines;
+  final String notes;
+  final DateTime? createdAt;
+
+  // Helper UI fields
+  final String? doctorName;
+  final String? doctorSpecialty;
+  final String? patientName;
 
   PrescriptionModel({
-    required this.id,
+    required this.prescriptionId,
     required this.doctorId,
-    required this.doctorName,
-    required this.doctorSpecialty,
     required this.patientId,
-    required this.patientName,
-    required this.dateIssued,
-    required this.diagnosis,
-    required this.medications,
+    required this.appointmentId,
+    required this.medicines,
+    required this.notes,
+    this.createdAt,
+    this.doctorName,
+    this.doctorSpecialty,
+    this.patientName,
   });
 
-  factory PrescriptionModel.fromMap(Map<String, dynamic> map, String presId) {
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    return DateTime.now();
+  }
+
+  factory PrescriptionModel.fromMap(Map<String, dynamic> map, String id) {
     return PrescriptionModel(
-      id: presId,
+      prescriptionId: id,
       doctorId: map['doctorId'] ?? '',
-      doctorName: map['doctorName'] ?? '',
-      doctorSpecialty: map['doctorSpecialty'] ?? '',
       patientId: map['patientId'] ?? '',
-      patientName: map['patientName'] ?? '',
-      dateIssued: map['dateIssued'] != null 
-          ? DateTime.parse(map['dateIssued'].toString()) 
-          : DateTime.now(),
-      diagnosis: map['diagnosis'] ?? '',
-      medications: (map['medications'] as List<dynamic>?)
+      appointmentId: map['appointmentId'] ?? '',
+      medicines: (map['medicines'] as List<dynamic>?)
               ?.map((item) => PrescriptionItem.fromMap(Map<String, dynamic>.from(item)))
-              .toList() ?? 
+              .toList() ??
           [],
+      notes: map['notes'] ?? '',
+      createdAt: map['createdAt'] != null ? _parseDateTime(map['createdAt']) : null,
+      doctorName: map['doctorName'],
+      doctorSpecialty: map['doctorSpecialty'],
+      patientName: map['patientName'],
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
+      'prescriptionId': prescriptionId,
       'doctorId': doctorId,
+      'patientId': patientId,
+      'appointmentId': appointmentId,
+      'medicines': medicines.map((med) => med.toMap()).toList(),
+      'notes': notes,
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : FieldValue.serverTimestamp(),
       'doctorName': doctorName,
       'doctorSpecialty': doctorSpecialty,
-      'patientId': patientId,
       'patientName': patientName,
-      'dateIssued': dateIssued.toIso8601String(),
-      'diagnosis': diagnosis,
-      'medications': medications.map((med) => med.toMap()).toList(),
     };
+  }
+
+  PrescriptionModel copyWith({
+    String? prescriptionId,
+    String? doctorId,
+    String? patientId,
+    String? appointmentId,
+    List<PrescriptionItem>? medicines,
+    String? notes,
+    DateTime? createdAt,
+    String? doctorName,
+    String? doctorSpecialty,
+    String? patientName,
+  }) {
+    return PrescriptionModel(
+      prescriptionId: prescriptionId ?? this.prescriptionId,
+      doctorId: doctorId ?? this.doctorId,
+      patientId: patientId ?? this.patientId,
+      appointmentId: appointmentId ?? this.appointmentId,
+      medicines: medicines ?? this.medicines,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+      doctorName: doctorName ?? this.doctorName,
+      doctorSpecialty: doctorSpecialty ?? this.doctorSpecialty,
+      patientName: patientName ?? this.patientName,
+    );
   }
 }

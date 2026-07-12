@@ -1,185 +1,197 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_constants.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/routes/app_routes.dart';
+import '../../data/models/patient_model.dart';
+import '../providers/patient_provider.dart';
 
 class PatientProfileScreen extends StatelessWidget {
-  const PatientProfileScreen({super.key});
+  final PatientModel? patient;
+
+  const PatientProfileScreen({super.key, this.patient});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final provider = Provider.of<PatientProvider>(context);
+
+    // If patient argument is null, we redirect to Add/Edit screen
+    if (patient == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, AppRoutes.patientAddEdit, arguments: null);
+      });
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final pat = patient!;
+    final age = DateTime.now().year - pat.dob.year;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Patient Health Record'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppConstants.paddingL),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Patient Header Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppConstants.paddingM),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 36,
-                      backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                      child: Icon(
-                        Icons.person_rounded,
-                        size: 40,
-                        color: theme.colorScheme.primary,
+      body: CustomScrollView(
+        slivers: [
+          // Collapsing AppBar
+          SliverAppBar.large(
+            title: Text(pat.fullName),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_rounded),
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRoutes.patientAddEdit, arguments: pat);
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded),
+                color: theme.colorScheme.error,
+                onPressed: () => _confirmDelete(context, provider, pat),
+              ),
+            ],
+          ),
+
+          // Details List
+          SliverToBoxAdapter(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Photo Hero
+                  Center(
+                    child: Hero(
+                      tag: 'patient_card_${pat.patientId}',
+                      child: CircleAvatar(
+                        radius: 64,
+                        backgroundColor: theme.colorScheme.primaryContainer,
+                        backgroundImage: pat.profileImage != null
+                            ? NetworkImage(pat.profileImage!)
+                            : null,
+                        child: pat.profileImage == null
+                            ? Icon(Icons.person_outline_rounded, size: 64, color: theme.colorScheme.onPrimaryContainer)
+                            : null,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Demographic Grid
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoCard(
+                          context,
+                          'Age / Gender',
+                          '$age Yrs / ${pat.gender}',
+                          Icons.face_rounded,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildInfoCard(
+                          context,
+                          'Blood Group',
+                          pat.bloodGroup,
+                          Icons.bloodtype_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Core Info Card
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'John Doe',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Patient ID: FC-98234-A',
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Age: 34 • Male',
-                            style: theme.textTheme.bodySmall,
-                          ),
+                          _buildDetailRow(context, Icons.email_outlined, 'Email', pat.email),
+                          const Divider(height: 24),
+                          _buildDetailRow(context, Icons.phone_android_rounded, 'Phone', pat.phone),
+                          const Divider(height: 24),
+                          _buildDetailRow(context, Icons.home_outlined, 'Home Address', pat.address),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Vitals Section Title
-            Text(
-              'Latest Vitals Check',
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-
-            // Vitals Grid/Row
-            Row(
-              children: [
-                Expanded(
-                  child: _buildVitalCard(
-                    context, 
-                    Icons.favorite_rounded, 
-                    'Heart Rate', 
-                    '72 bpm', 
-                    'Normal', 
-                    AppColors.secondaryEmerald,
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildVitalCard(
-                    context, 
-                    Icons.thermostat_rounded, 
-                    'Temp', 
-                    '98.6 °F', 
-                    'Normal', 
-                    AppColors.secondaryEmerald,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildVitalCard(
-                    context, 
-                    Icons.speed_rounded, 
-                    'Blood Press.', 
-                    '120/80', 
-                    'Optimal', 
-                    AppColors.secondaryEmerald,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildVitalCard(
-                    context, 
-                    Icons.bloodtype_rounded, 
-                    'Blood Group', 
-                    'O +ve', 
-                    'Confirmed', 
-                    theme.colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-            // Medical History List
-            Text(
-              'Medical Conditions',
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
+                  // Medical History
+                  Text(
+                    'Medical Conditions & History',
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  if (pat.medicalHistory.isEmpty)
+                    Text(
+                      'No reported medical conditions.',
+                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    )
+                  else
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 4.0,
+                      children: pat.medicalHistory.map((item) {
+                        return Chip(
+                          avatar: const Icon(Icons.assignment_turned_in_rounded, size: 14),
+                          label: Text(item),
+                        );
+                      }).toList(),
+                    ),
+                  const SizedBox(height: 24),
 
-            Card(
-              child: ListView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildConditionTile(context, 'Mild Asthma', 'Diagnosed: 2021', 'Active', Colors.orange),
-                  const Divider(height: 1),
-                  _buildConditionTile(context, 'Allergy to Penicillin', 'Diagnosed: 2018', 'Critical', AppColors.alertCoral),
-                  const Divider(height: 1),
-                  _buildConditionTile(context, 'Vitamin D Deficiency', 'Diagnosed: 2023', 'Resolved', AppColors.secondaryEmerald),
+                  // Allergies
+                  Text(
+                    'Allergies',
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  if (pat.allergies.isEmpty)
+                    Text(
+                      'No known allergies reported.',
+                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    )
+                  else
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 4.0,
+                      children: pat.allergies.map((item) {
+                        return Chip(
+                          avatar: const Icon(Icons.warning_amber_rounded, size: 14, color: Colors.orange),
+                          label: Text(item),
+                        );
+                      }).toList(),
+                    ),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildVitalCard(
-    BuildContext context, 
-    IconData icon, 
-    String title, 
-    String value, 
-    String status, 
-    Color color,
-  ) {
+  Widget _buildInfoCard(BuildContext context, String title, String value, IconData icon) {
     final theme = Theme.of(context);
     return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
       child: Padding(
-        padding: const EdgeInsets.all(AppConstants.paddingM),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 12),
-            Text(title, style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 4),
+            Icon(icon, color: theme.colorScheme.primary, size: 24),
+            const SizedBox(height: 8),
             Text(
               value,
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(
-              status,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
+              title,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -187,35 +199,65 @@ class PatientProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildConditionTile(
-    BuildContext context, 
-    String title, 
-    String date, 
-    String status, 
-    Color statusColor,
-  ) {
+  Widget _buildDetailRow(BuildContext context, IconData icon, String label, String value) {
     final theme = Theme.of(context);
-    return ListTile(
-      leading: CircleAvatar(
-        radius: 18,
-        backgroundColor: statusColor.withOpacity(0.1),
-        child: Icon(Icons.assignment_rounded, color: statusColor, size: 20),
-      ),
-      title: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-      subtitle: Text(date, style: theme.textTheme.bodySmall),
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: statusColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(AppConstants.radiusS),
-        ),
-        child: Text(
-          status,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: statusColor,
-            fontWeight: FontWeight.bold,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: theme.colorScheme.primary, size: 20),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 2),
+              Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+            ],
           ),
         ),
+      ],
+    );
+  }
+
+  void _confirmDelete(BuildContext context, PatientProvider provider, PatientModel pat) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Patient Profile?'),
+        content: Text('Are you sure you want to delete ${pat.fullName}\'s profile and medical logs permanently?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await provider.deletePatient(pat.patientId);
+              if (context.mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Patient profile removed.')),
+                  );
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(provider.errorMessage ?? 'Failed to delete profile.'),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }

@@ -1,162 +1,288 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_constants.dart';
-import '../../../../core/widgets/custom_button.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../data/models/prescription_model.dart';
+import '../providers/prescription_provider.dart';
 
 class PrescriptionDetailScreen extends StatelessWidget {
-  const PrescriptionDetailScreen({super.key});
+  final PrescriptionModel? prescription;
+
+  const PrescriptionDetailScreen({super.key, this.prescription});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final provider = Provider.of<PrescriptionProvider>(context);
+
+    if (prescription == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Prescription Details')),
+        body: const Center(
+          child: Text('Prescription record not found.'),
+        ),
+      );
+    }
+
+    final pres = prescription!;
+    final formattedDate = pres.createdAt != null 
+        ? DateFormat('dd MMMM yyyy, hh:mm a').format(pres.createdAt!) 
+        : 'Today';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Prescription Details'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline_rounded),
+            color: theme.colorScheme.error,
+            onPressed: () => _confirmDelete(context, provider, pres),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppConstants.paddingL),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Medical Letterhead Card
+            // Header Clinic Metadata
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(AppConstants.paddingM),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.healing_rounded, color: theme.colorScheme.primary, size: 28),
-                        const SizedBox(width: 8),
                         Text(
-                          'FastCure Health Center',
-                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                          'FASTCURE MEDICAL CENTER',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
+                        Icon(Icons.healing_rounded, color: theme.colorScheme.primary),
                       ],
                     ),
                     const Divider(height: 24),
-                    _buildMetaText(context, 'Doctor', 'Dr. Sarah Jenkins (Cardiology)'),
-                    _buildMetaText(context, 'Patient', 'John Doe (Age: 34)'),
-                    _buildMetaText(context, 'Date Issued', '12 July 2026'),
-                    _buildMetaText(context, 'Diagnosis', 'Essential Hypertension (Stage 1)'),
+                    _buildMetaRow(context, 'Prescription ID', pres.prescriptionId),
+                    const SizedBox(height: 8),
+                    _buildMetaRow(context, 'Date Issued', formattedDate),
+                    const SizedBox(height: 8),
+                    _buildMetaRow(context, 'Appointment ID', pres.appointmentId),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
-            // Rx icon & Medication Section
+            // Doctor & Patient demographics Card
             Row(
               children: [
-                Icon(Icons.receipt_long_rounded, color: theme.colorScheme.primary),
+                Expanded(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('DOCTOR', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(pres.doctorName ?? 'N/A', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                          Text(pres.doctorSpecialty ?? 'Specialist', style: theme.textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 8),
-                Text(
-                  'Prescribed Medicines (Rx)',
-                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('PATIENT', style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(pres.patientName ?? 'N/A', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                          Text('Patient ID: ${pres.patientId}', style: theme.textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+
+            // Medicines Table title
+            Text(
+              'Prescribed Medications',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
 
+            // Table Grid Card
             Card(
-              child: ListView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
+              clipBehavior: Clip.antiAlias,
+              child: Table(
+                border: TableBorder.symmetric(
+                  inside: BorderSide(color: theme.colorScheme.outlineVariant),
+                ),
+                columnWidths: const {
+                  0: FlexColumnWidth(3),
+                  1: FlexColumnWidth(2),
+                  2: FlexColumnWidth(1.2),
+                },
                 children: [
-                  _buildMedicationTile(context, 'Atorvastatin 20mg', '1 Tablet daily', 'Bedtime', 'Duration: 30 Days'),
-                  const Divider(height: 1),
-                  _buildMedicationTile(context, 'Lisinopril 10mg', '1 Tablet daily', 'Morning (with water)', 'Duration: 90 Days'),
-                  const Divider(height: 1),
-                  _buildMedicationTile(context, 'Omega-3 Fish Oil 1000mg', '1 Capsule twice daily', 'Breakfast & Dinner', 'Duration: 60 Days'),
+                  // Table Header
+                  TableRow(
+                    decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.4)),
+                    children: [
+                      _buildHeaderCell(context, 'Medicine'),
+                      _buildHeaderCell(context, 'Dosage / Instruction'),
+                      _buildHeaderCell(context, 'Qty'),
+                    ],
+                  ),
+                  // Table Rows
+                  ...pres.medicines.map((item) {
+                    return TableRow(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Text(item.name, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Text(item.dosage, style: theme.textTheme.bodySmall),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Text('${item.quantity} pcs', style: theme.textTheme.bodyMedium),
+                        ),
+                      ],
+                    );
+                  }),
                 ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Notes Section
+            Text(
+              'Advice / Notes',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  pres.notes.isNotEmpty ? pres.notes : 'No extra notes provided by consultant.',
+                  style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+                ),
               ),
             ),
             const SizedBox(height: 32),
 
-            // Download/Share buttons
-            CustomButton(
-              text: 'Download PDF Copy',
-              onPressed: () {
-                // Stub action
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Downloading prescription PDF...')),
-                );
-              },
+            // Print button mockup
+            ElevatedButton.icon(
+              onPressed: () => _printMockup(context),
+              icon: const Icon(Icons.print_rounded),
+              label: const Text('Export Prescription PDF'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMetaText(BuildContext context, String label, String value) {
+  Widget _buildHeaderCell(BuildContext context, String label) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              '$label:',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-            ),
+      padding: const EdgeInsets.all(12.0),
+      child: Text(
+        label,
+        style: theme.textTheme.bodySmall?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetaRow(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  void _printMockup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.primary, size: 48),
+        title: const Text('PDF Generated'),
+        content: const Text(
+          'FastCure clinical prescription PDF compiled successfully. Sent to system printers.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Dismiss'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMedicationTile(
-    BuildContext context, 
-    String medName, 
-    String frequency, 
-    String timing, 
-    String duration,
-  ) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(AppConstants.paddingM),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            medName,
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+  void _confirmDelete(BuildContext context, PrescriptionProvider provider, PrescriptionModel pres) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Prescription?'),
+        content: const Text('Are you sure you want to delete this prescription history permanently?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(Icons.restore_rounded, size: 14, color: theme.colorScheme.outline),
-              const SizedBox(width: 4),
-              Text(frequency, style: theme.textTheme.bodyMedium),
-              const SizedBox(width: 12),
-              const Icon(Icons.circle, size: 4, color: Colors.grey),
-              const SizedBox(width: 12),
-              Icon(Icons.wb_sunny_outlined, size: 14, color: theme.colorScheme.outline),
-              const SizedBox(width: 4),
-              Text(timing, style: theme.textTheme.bodyMedium),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            duration,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.secondaryEmerald,
-              fontWeight: FontWeight.w600,
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success = await provider.deletePrescription(pres.prescriptionId);
+              if (context.mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Prescription removed.')),
+                  );
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(provider.errorMessage ?? 'Failed to delete record.'),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
             ),
+            child: const Text('Delete'),
           ),
         ],
       ),

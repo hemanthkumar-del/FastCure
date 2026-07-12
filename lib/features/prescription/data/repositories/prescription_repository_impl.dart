@@ -8,46 +8,81 @@ class PrescriptionRepositoryImpl implements PrescriptionRepository {
 
   @override
   Future<List<PrescriptionModel>> getPrescriptions() async {
-    final query = await _firestore.collection(AppConstants.colPrescriptions).get();
-    return query.docs.map((doc) => PrescriptionModel.fromMap(doc.data(), doc.id)).toList();
-  }
-
-  @override
-  Future<List<PrescriptionModel>> getPrescriptionsForUser(String patientId) async {
-    final query = await _firestore
-        .collection(AppConstants.colPrescriptions)
-        .where('patientId', isEqualTo: patientId)
-        .get();
-    return query.docs.map((doc) => PrescriptionModel.fromMap(doc.data(), doc.id)).toList();
-  }
-
-  @override
-  Future<PrescriptionModel?> getPrescriptionById(String id) async {
-    final doc = await _firestore.collection(AppConstants.colPrescriptions).doc(id).get();
-    if (doc.exists && doc.data() != null) {
-      return PrescriptionModel.fromMap(doc.data()!, doc.id);
+    try {
+      final query = await _firestore.collection(AppConstants.colPrescriptions).get();
+      return query.docs.map((doc) => PrescriptionModel.fromMap(doc.data(), doc.id)).toList();
+    } on FirebaseException catch (e) {
+      throw _handleFirebaseException(e);
+    } catch (e) {
+      throw Exception('Failed to retrieve prescription logs.');
     }
-    return null;
+  }
+
+  @override
+  Future<PrescriptionModel?> getPrescriptionById(String prescriptionId) async {
+    try {
+      final doc = await _firestore.collection(AppConstants.colPrescriptions).doc(prescriptionId).get();
+      if (doc.exists && doc.data() != null) {
+        return PrescriptionModel.fromMap(doc.data()!, doc.id);
+      }
+      return null;
+    } on FirebaseException catch (e) {
+      throw _handleFirebaseException(e);
+    } catch (e) {
+      throw Exception('Failed to retrieve prescription details.');
+    }
   }
 
   @override
   Future<void> createPrescription(PrescriptionModel prescription) async {
-    await _firestore
-        .collection(AppConstants.colPrescriptions)
-        .doc(prescription.id.isNotEmpty ? prescription.id : null)
-        .set(prescription.toMap());
+    try {
+      final docWithTimestamp = prescription.copyWith(
+        createdAt: DateTime.now(),
+      );
+      await _firestore
+          .collection(AppConstants.colPrescriptions)
+          .doc(prescription.prescriptionId)
+          .set(docWithTimestamp.toMap());
+    } on FirebaseException catch (e) {
+      throw _handleFirebaseException(e);
+    } catch (e) {
+      throw Exception('Failed to issue prescription.');
+    }
   }
 
   @override
   Future<void> updatePrescription(PrescriptionModel prescription) async {
-    await _firestore
-        .collection(AppConstants.colPrescriptions)
-        .doc(prescription.id)
-        .update(prescription.toMap());
+    try {
+      await _firestore
+          .collection(AppConstants.colPrescriptions)
+          .doc(prescription.prescriptionId)
+          .update(prescription.toMap());
+    } on FirebaseException catch (e) {
+      throw _handleFirebaseException(e);
+    } catch (e) {
+      throw Exception('Failed to update prescription details.');
+    }
   }
 
   @override
-  Future<void> deletePrescription(String id) async {
-    await _firestore.collection(AppConstants.colPrescriptions).doc(id).delete();
+  Future<void> deletePrescription(String prescriptionId) async {
+    try {
+      await _firestore.collection(AppConstants.colPrescriptions).doc(prescriptionId).delete();
+    } on FirebaseException catch (e) {
+      throw _handleFirebaseException(e);
+    } catch (e) {
+      throw Exception('Failed to delete prescription record.');
+    }
+  }
+
+  Exception _handleFirebaseException(FirebaseException e) {
+    switch (e.code) {
+      case 'permission-denied':
+        return Exception('Security rules violation: Access denied to prescription logs.');
+      case 'unavailable':
+        return Exception('Database service is offline. Please check your network connection.');
+      default:
+        return Exception(e.message ?? 'An unexpected error occurred in Cloud Firestore.');
+    }
   }
 }

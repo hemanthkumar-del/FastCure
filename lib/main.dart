@@ -19,6 +19,9 @@ import 'features/medicine/presentation/providers/medicine_provider.dart';
 import 'features/prescription/data/repositories/prescription_repository_impl.dart';
 import 'features/prescription/presentation/providers/prescription_provider.dart';
 import 'features/settings/presentation/providers/settings_provider.dart';
+import 'features/billing/data/repositories/bill_repository_impl.dart';
+import 'features/billing/presentation/providers/bill_provider.dart';
+import 'features/ai/presentation/providers/chat_provider.dart';
 
 void main() async {
   // Ensure Flutter widgets are initialized
@@ -46,6 +49,8 @@ class FastCureApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AppointmentProvider(AppointmentRepositoryImpl())),
         ChangeNotifierProvider(create: (_) => MedicineProvider(MedicineRepositoryImpl())),
         ChangeNotifierProvider(create: (_) => PrescriptionProvider(PrescriptionRepositoryImpl())),
+        ChangeNotifierProvider(create: (_) => BillProvider(BillRepositoryImpl())),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, _) {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../appointment/presentation/widgets/appointment_list_view.dart';
-import '../../../doctor/presentation/widgets/doctor_list_view.dart';
+import '../../../doctor/presentation/screens/doctor_list_screen.dart';
 import '../../../prescription/presentation/widgets/prescription_list_view.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../widgets/dashboard_home_view.dart';
@@ -19,7 +19,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final List<Widget> _views = [
     const DashboardHomeView(),
-    const DoctorListView(),
+    const DoctorListScreen(),
     const AppointmentListView(),
     const PrescriptionListView(),
     const ProfileScreen(),
@@ -71,6 +71,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               )
             ],
+          ),
+          // AI Assistant
+          IconButton(
+            icon: const Icon(Icons.assistant_rounded),
+            tooltip: 'AI Assistant',
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.aiChat);
+            },
           ),
           // Settings Gear
           IconButton(

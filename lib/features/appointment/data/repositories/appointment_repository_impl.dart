@@ -8,46 +8,81 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
   @override
   Future<List<AppointmentModel>> getAppointments() async {
-    final query = await _firestore.collection(AppConstants.colAppointments).get();
-    return query.docs.map((doc) => AppointmentModel.fromMap(doc.data(), doc.id)).toList();
-  }
-
-  @override
-  Future<List<AppointmentModel>> getAppointmentsForUser(String patientId) async {
-    final query = await _firestore
-        .collection(AppConstants.colAppointments)
-        .where('patientId', isEqualTo: patientId)
-        .get();
-    return query.docs.map((doc) => AppointmentModel.fromMap(doc.data(), doc.id)).toList();
-  }
-
-  @override
-  Future<AppointmentModel?> getAppointmentById(String id) async {
-    final doc = await _firestore.collection(AppConstants.colAppointments).doc(id).get();
-    if (doc.exists && doc.data() != null) {
-      return AppointmentModel.fromMap(doc.data()!, doc.id);
+    try {
+      final query = await _firestore.collection(AppConstants.colAppointments).get();
+      return query.docs.map((doc) => AppointmentModel.fromMap(doc.data(), doc.id)).toList();
+    } on FirebaseException catch (e) {
+      throw _handleFirebaseException(e);
+    } catch (e) {
+      throw Exception('Failed to retrieve appointments directory.');
     }
-    return null;
+  }
+
+  @override
+  Future<AppointmentModel?> getAppointmentById(String appointmentId) async {
+    try {
+      final doc = await _firestore.collection(AppConstants.colAppointments).doc(appointmentId).get();
+      if (doc.exists && doc.data() != null) {
+        return AppointmentModel.fromMap(doc.data()!, doc.id);
+      }
+      return null;
+    } on FirebaseException catch (e) {
+      throw _handleFirebaseException(e);
+    } catch (e) {
+      throw Exception('Failed to retrieve appointment details.');
+    }
   }
 
   @override
   Future<void> createAppointment(AppointmentModel appointment) async {
-    await _firestore
-        .collection(AppConstants.colAppointments)
-        .doc(appointment.id.isNotEmpty ? appointment.id : null)
-        .set(appointment.toMap());
+    try {
+      final docWithTimestamp = appointment.copyWith(
+        createdAt: DateTime.now(),
+      );
+      await _firestore
+          .collection(AppConstants.colAppointments)
+          .doc(appointment.appointmentId)
+          .set(docWithTimestamp.toMap());
+    } on FirebaseException catch (e) {
+      throw _handleFirebaseException(e);
+    } catch (e) {
+      throw Exception('Failed to book appointment.');
+    }
   }
 
   @override
   Future<void> updateAppointment(AppointmentModel appointment) async {
-    await _firestore
-        .collection(AppConstants.colAppointments)
-        .doc(appointment.id)
-        .update(appointment.toMap());
+    try {
+      await _firestore
+          .collection(AppConstants.colAppointments)
+          .doc(appointment.appointmentId)
+          .update(appointment.toMap());
+    } on FirebaseException catch (e) {
+      throw _handleFirebaseException(e);
+    } catch (e) {
+      throw Exception('Failed to reschedule appointment.');
+    }
   }
 
   @override
-  Future<void> deleteAppointment(String id) async {
-    await _firestore.collection(AppConstants.colAppointments).doc(id).delete();
+  Future<void> deleteAppointment(String appointmentId) async {
+    try {
+      await _firestore.collection(AppConstants.colAppointments).doc(appointmentId).delete();
+    } on FirebaseException catch (e) {
+      throw _handleFirebaseException(e);
+    } catch (e) {
+      throw Exception('Failed to cancel appointment.');
+    }
+  }
+
+  Exception _handleFirebaseException(FirebaseException e) {
+    switch (e.code) {
+      case 'permission-denied':
+        return Exception('Security rules violation: Access denied to appointment logs.');
+      case 'unavailable':
+        return Exception('Database service is offline. Please check your network connection.');
+      default:
+        return Exception(e.message ?? 'An unexpected error occurred in Cloud Firestore.');
+    }
   }
 }

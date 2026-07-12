@@ -1,118 +1,214 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_constants.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/routes/app_routes.dart';
-import '../../../../core/widgets/custom_button.dart';
+import '../../data/models/doctor_model.dart';
+import '../providers/doctor_provider.dart';
 
 class DoctorDetailScreen extends StatelessWidget {
-  const DoctorDetailScreen({super.key});
+  final DoctorModel? doctor;
+
+  const DoctorDetailScreen({super.key, this.doctor});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Standard mock doctor arguments could be retrieved here
-    // final Map<String, dynamic>? doctor = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final provider = Provider.of<DoctorProvider>(context);
+
+    // If doctor is null, we redirect to Add/Edit screen directly
+    if (doctor == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, AppRoutes.doctorAddEdit, arguments: null);
+      });
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final doc = doctor!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Doctor Details'),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header card
-            Container(
-              padding: const EdgeInsets.all(AppConstants.paddingL),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(AppConstants.radiusXL),
-                  bottomRight: Radius.circular(AppConstants.radiusXL),
-                ),
+      body: CustomScrollView(
+        slivers: [
+          // M3 Collapsing Header
+          SliverAppBar.large(
+            title: Text(doc.fullName),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_rounded),
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRoutes.doctorAddEdit, arguments: doc);
+                },
               ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded),
+                color: theme.colorScheme.error,
+                onPressed: () => _confirmDelete(context, provider, doc),
+              ),
+            ],
+          ),
+
+          // Detail list
+          SliverToBoxAdapter(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  CircleAvatar(
-                    radius: 54,
-                    backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
-                    child: Icon(
-                      Icons.person_rounded,
-                      size: 64,
-                      color: theme.colorScheme.primary,
+                  // Profile Photo Hero & Card
+                  Center(
+                    child: Hero(
+                      tag: 'doc_card_${doc.doctorId}',
+                      child: CircleAvatar(
+                        radius: 64,
+                        backgroundColor: theme.colorScheme.primaryContainer,
+                        backgroundImage: doc.profileImage != null
+                            ? NetworkImage(doc.profileImage!)
+                            : null,
+                        child: doc.profileImage == null
+                            ? Icon(Icons.person_rounded, size: 64, color: theme.colorScheme.onPrimaryContainer)
+                            : null,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Specialty & Hospital title
                   Text(
-                    'Dr. Sarah Jenkins',
-                    style: theme.textTheme.headlineMedium?.copyWith(
+                    doc.specialization,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Cardiologist • MD, FACC',
+                    '${doc.qualification} • ${doc.hospitalName}',
+                    textAlign: TextAlign.center,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildRatingStat(context, Icons.star_rounded, '4.9', 'Reviews (120)'),
-                      const SizedBox(width: 24),
-                      _buildRatingStat(context, Icons.work_rounded, '12 Yrs', 'Experience'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            
-            Padding(
-              padding: const EdgeInsets.all(AppConstants.paddingL),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // About Section
-                  Text(
-                    'Biography',
-                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Dr. Sarah Jenkins is an award-winning Cardiologist with over 12 years of experience in clinical practice. She specializes in cardiac surgery, heart valve disease, and prevention strategies. She is dedicated to providing high-quality, patient-centric care.',
-                    style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 24),
 
-                  // Info card
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppConstants.paddingM),
-                      child: Column(
-                        children: [
-                          _buildInfoRow(context, Icons.access_time_filled_rounded, 'Working Hours', 'Mon - Fri, 09:00 AM - 05:00 PM'),
-                          const Divider(height: 24),
-                          _buildInfoRow(context, Icons.monetization_on_rounded, 'Consultation Fee', '\$150.00'),
-                          const Divider(height: 24),
-                          _buildInfoRow(context, Icons.location_on_rounded, 'Location', 'FastCure Health Center, Clinic B, Floor 2'),
-                        ],
+                  // Info grid stats cards
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Experience',
+                          '${doc.experience} Years',
+                          Icons.workspace_premium_rounded,
+                        ),
                       ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Consultation Fee',
+                          '\$${doc.consultationFee.toStringAsFixed(0)}',
+                          Icons.payments_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildStatCard(
+                          context,
+                          'Department',
+                          doc.department,
+                          Icons.domain_rounded,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Bio Section
+                  Text(
+                    'Biography',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 32),
-
-                  // Book Appointment button
-                  CustomButton(
-                    text: 'Book Consultation',
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.appointmentBook);
-                    },
+                  const SizedBox(height: 8),
+                  Text(
+                    doc.bio.isNotEmpty ? doc.bio : 'No biography available for this doctor.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
+                  const SizedBox(height: 24),
+
+                  // Availability Days Section
+                  Text(
+                    'Available Work Days',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 4.0,
+                    children: doc.availableDays.map((day) {
+                      return Chip(
+                        avatar: const Icon(Icons.calendar_today_rounded, size: 14),
+                        label: Text(day),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Time slots availability
+                  Text(
+                    'Time Slots',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 4.0,
+                    children: doc.availableTimeSlots.map((slot) {
+                      return Chip(
+                        avatar: const Icon(Icons.access_time_rounded, size: 14),
+                        label: Text(slot),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 32),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            Icon(icon, color: theme.colorScheme.primary, size: 24),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -120,47 +216,45 @@ class DoctorDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRatingStat(BuildContext context, IconData icon, String value, String label) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(icon, color: AppColors.secondaryEmerald, size: 20),
-        const SizedBox(width: 6),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            Text(label, style: theme.textTheme.bodySmall),
-          ],
-        )
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(AppConstants.radiusS),
+  void _confirmDelete(BuildContext context, DoctorProvider provider, DoctorModel doc) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Doctor Record?'),
+        content: Text('Are you sure you want to remove Dr. ${doc.fullName} permanently from the directory?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
           ),
-          child: Icon(icon, color: theme.colorScheme.primary, size: 20),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: theme.textTheme.bodySmall),
-              const SizedBox(height: 2),
-              Text(value, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-            ],
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx); // Close dialog
+              final success = await provider.deleteDoctor(doc.doctorId);
+              if (context.mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Doctor record deleted.')),
+                  );
+                  Navigator.pop(context); // Exit details
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(provider.errorMessage ?? 'Failed to delete record.'),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: const Text('Delete'),
           ),
-        )
-      ],
+        ],
+      ),
     );
   }
 }
