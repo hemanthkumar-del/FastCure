@@ -4,6 +4,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/utils/logger.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -37,8 +38,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         if (success) {
           if (authProvider.isEmailVerified) {
+            AppLogger.info('Navigation started: AppRoutes.dashboard');
             Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
           } else {
+            AppLogger.info('Navigation started: AppRoutes.verifyEmail');
             Navigator.pushReplacementNamed(context, AppRoutes.verifyEmail);
           }
         } else {
@@ -62,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       if (success) {
         // Google accounts are pre-verified, send straight to dashboard
+        AppLogger.info('Navigation started: AppRoutes.dashboard (Google Sign-In)');
         Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
       } else if (authProvider.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(

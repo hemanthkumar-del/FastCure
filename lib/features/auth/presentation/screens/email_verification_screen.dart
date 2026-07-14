@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/custom_button.dart';
+import '../../../../core/utils/logger.dart';
 import '../providers/auth_provider.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
@@ -63,6 +64,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     
     if (mounted && authProvider.isEmailVerified) {
       _autoRefreshTimer?.cancel();
+      AppLogger.info('Navigation started: AppRoutes.dashboard (Email Verified)');
       Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
     }
   }

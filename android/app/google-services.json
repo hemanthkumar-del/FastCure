@@ -1,49 +1,34 @@
 {
   "project_info": {
-    "project_number": "391872355874",
-    "project_id": "fastcure",
-    "storage_bucket": "fastcure.firebasestorage.app"
+    "project_number": "380555454326",
+    "project_id": "fastcure-8060c",
+    "storage_bucket": "fastcure-8060c.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:391872355874:android:aa1023e0aa934af527347b",
+        "mobilesdk_app_id": "1:380555454326:android:cf936da1b6c44e5d993c57",
         "android_client_info": {
           "package_name": "com.fastcure.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "391872355874-ie36155umsfsqesnfui6c5icp0s39rl2.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.fastcure.app",
-            "certificate_hash": "19f109bd58095673aab6fdf309c414797c08c29c"
-          }
-        },
-        {
-          "client_id": "391872355874-t9r0ikcpogjhj1s9rjsci4vd7vu2795m.apps.googleusercontent.com",
+          "client_id": "380555454326-6ted5ohjoshaurmb4bosrr0ake0r3mhd.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDhOerChjmWkJzWM8pAbKxH6tbkCStCutE"
+          "current_key": "AIzaSyA1IAyTSrT0gzsOsiBSrTKWXUcFhyj_z84"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "391872355874-t9r0ikcpogjhj1s9rjsci4vd7vu2795m.apps.googleusercontent.com",
+              "client_id": "380555454326-6ted5ohjoshaurmb4bosrr0ake0r3mhd.apps.googleusercontent.com",
               "client_type": 3
-            },
-            {
-              "client_id": "391872355874-m38b9d644dcdgu367grdbjcfelabscmo.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.fastcure.fastcure"
-              }
             }
           ]
         }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/routes/app_routes.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/utils/logger.dart';
 import '../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -50,6 +51,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted) {
         if (success) {
           // Send to email verification screen to wait for link click
+          AppLogger.info('Navigation started: AppRoutes.verifyEmail');
           Navigator.pushReplacementNamed(context, AppRoutes.verifyEmail);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
