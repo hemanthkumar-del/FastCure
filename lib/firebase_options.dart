@@ -44,37 +44,37 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBukCVR8AjPU15ZZWshoSLINgKMlP3LU-M',
-    appId: '1:391872355874:web:1365c94e1ece97a127347b',
-    messagingSenderId: '391872355874',
-    projectId: 'fastcure',
-    authDomain: 'fastcure.firebaseapp.com',
-    storageBucket: 'fastcure.firebasestorage.app',
+    apiKey: 'AIzaSyA1IAyTSrT0gzsOsiBSrTKWXUcFhyj_z84',
+    appId: '1:380555454326:web:1365c94e1ece97a127347b',
+    messagingSenderId: '380555454326',
+    projectId: 'fastcure-8060c',
+    authDomain: 'fastcure-8060c.firebaseapp.com',
+    storageBucket: 'fastcure-8060c.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDhOerChjmWkJzWM8pAbKxH6tbkCStCutE',
-    appId: '1:391872355874:android:aa1023e0aa934af527347b',
-    messagingSenderId: '391872355874',
-    projectId: 'fastcure',
-    storageBucket: 'fastcure.firebasestorage.app',
+    apiKey: 'AIzaSyA1IAyTSrT0gzsOsiBSrTKWXUcFhyj_z84',
+    appId: '1:380555454326:android:cf936da1b6c44e5d993c57',
+    messagingSenderId: '380555454326',
+    projectId: 'fastcure-8060c',
+    storageBucket: 'fastcure-8060c.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDzLEFZx6WrXyrc99gNReWMKIxNhezhrTE',
-    appId: '1:391872355874:ios:2945bb5337dc269227347b',
-    messagingSenderId: '391872355874',
-    projectId: 'fastcure',
-    storageBucket: 'fastcure.firebasestorage.app',
+    apiKey: 'AIzaSyA1IAyTSrT0gzsOsiBSrTKWXUcFhyj_z84',
+    appId: '1:380555454326:ios:2945bb5337dc269227347b',
+    messagingSenderId: '380555454326',
+    projectId: 'fastcure-8060c',
+    storageBucket: 'fastcure-8060c.firebasestorage.app',
     iosBundleId: 'com.fastcure.fastcure',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDzLEFZx6WrXyrc99gNReWMKIxNhezhrTE',
-    appId: '1:391872355874:ios:2945bb5337dc269227347b',
-    messagingSenderId: '391872355874',
-    projectId: 'fastcure',
-    storageBucket: 'fastcure.firebasestorage.app',
+    apiKey: 'AIzaSyA1IAyTSrT0gzsOsiBSrTKWXUcFhyj_z84',
+    appId: '1:380555454326:ios:2945bb5337dc269227347b',
+    messagingSenderId: '380555454326',
+    projectId: 'fastcure-8060c',
+    storageBucket: 'fastcure-8060c.firebasestorage.app',
     iosBundleId: 'com.fastcure.fastcure',
   );
 }

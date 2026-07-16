@@ -7,15 +7,19 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:380555454326:android:cf936da1b6c44e5d993c57",
+        "mobilesdk_app_id": "1:380555454326:android:614af85012543b8a993c57",
         "android_client_info": {
-          "package_name": "com.fastcure.app"
+          "package_name": "com.fastcure.mobile"
         }
       },
       "oauth_client": [
         {
-          "client_id": "380555454326-6ted5ohjoshaurmb4bosrr0ake0r3mhd.apps.googleusercontent.com",
-          "client_type": 3
+          "client_id": "380555454326-4fgo6h86eso0ekbnc0947bn4kgs05l71.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fastcure.mobile",
+            "certificate_hash": "19f109bd58095673aab6fdf309c414797c08c29c"
+          }
         }
       ],
       "api_key": [
@@ -27,7 +31,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "380555454326-6ted5ohjoshaurmb4bosrr0ake0r3mhd.apps.googleusercontent.com",
+              "client_id": "380555454326-6tma0i38qda2hu3f5h5s8g61rqqrr4j9.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

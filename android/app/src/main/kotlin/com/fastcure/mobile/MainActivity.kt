@@ -1,4 +1,4 @@
-package com.fastcure.app
+package com.fastcure.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 
