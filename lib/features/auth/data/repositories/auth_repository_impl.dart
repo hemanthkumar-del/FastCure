@@ -46,7 +46,7 @@ class AuthRepositoryImpl implements AuthRepository {
           uid: firebaseUser.uid,
           fullName: firebaseUser.displayName ?? 'No Name',
           email: firebaseUser.email ?? '',
-          role: 'Patient',
+          role: 'unonboarded',
           photoUrl: firebaseUser.photoURL,
           phoneNumber: firebaseUser.phoneNumber,
           createdAt: DateTime.now(),
@@ -61,7 +61,7 @@ class AuthRepositoryImpl implements AuthRepository {
         uid: firebaseUser.uid,
         fullName: firebaseUser.displayName ?? '',
         email: firebaseUser.email ?? '',
-        role: 'Patient',
+        role: 'unonboarded',
         photoUrl: firebaseUser.photoURL,
         phoneNumber: firebaseUser.phoneNumber,
         isVerified: firebaseUser.emailVerified,
@@ -212,24 +212,15 @@ class AuthRepositoryImpl implements AuthRepository {
         AppLogger.info('Firestore user lookup completed: exists=${doc.exists}');
 
         if (!doc.exists) {
-          // If first sign-in, create Firestore record automatically
           final newUser = UserModel(
             uid: firebaseUser.uid,
             fullName: firebaseUser.displayName ?? 'Google User',
             email: firebaseUser.email ?? '',
-            role: 'Patient',
+            role: 'unonboarded',
             photoUrl: firebaseUser.photoURL,
             phoneNumber: firebaseUser.phoneNumber,
-            createdAt: now,
-            isVerified: true, // Google accounts are pre-verified
-            lastLogin: now,
+            isVerified: true,
           );
-          AppLogger.info('Firestore write started: create user document for Google user');
-          await _firestore
-              .collection(AppConstants.colUsers)
-              .doc(firebaseUser.uid)
-              .set(newUser.toMap());
-          AppLogger.info('Firestore write completed');
           return newUser;
         } else {
           // Document exists, update lastLogin & verification status
@@ -312,6 +303,18 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserModel?> getCurrentUser() async {
     final user = _firebaseAuth.currentUser;
     return await _mapFirebaseUser(user);
+  }
+
+  @override
+  Future<void> createUserProfile(UserModel user) async {
+    AppLogger.info('Firestore write started: create user document for onboarding');
+    final now = DateTime.now();
+    final userWithTime = user.copyWith(createdAt: now, lastLogin: now);
+    await _firestore
+        .collection(AppConstants.colUsers)
+        .doc(user.uid)
+        .set(userWithTime.toMap());
+    AppLogger.info('Firestore write completed');
   }
 
   // Map Firebase auth errors to human-friendly feedback messages

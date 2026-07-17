@@ -237,6 +237,31 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> completeOnboarding(String role) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      if (_currentUser != null) {
+        final updatedUser = _currentUser!.copyWith(role: role, isVerified: true);
+        await _authRepository.createUserProfile(updatedUser);
+        _currentUser = updatedUser;
+        await _saveLocalUser(updatedUser);
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+      _isLoading = false;
+      return false;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
     _isLoading = true;
     _errorMessage = null;

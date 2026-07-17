@@ -4,6 +4,7 @@ import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../providers/auth_provider.dart';
 import 'email_verification_screen.dart';
 import 'login_screen.dart';
+import 'role_selection_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -23,6 +24,9 @@ class AuthWrapper extends StatelessWidget {
 
     // Direct routing
     if (authProvider.isAuthenticated) {
+      if (authProvider.currentUser?.role == 'unonboarded') {
+        return const RoleSelectionScreen();
+      }
       if (authProvider.isEmailVerified) {
         return const DashboardScreen();
       } else {

@@ -9,6 +9,7 @@ import '../../features/auth/presentation/screens/email_verification_screen.dart'
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/auth_wrapper.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
+import '../../features/auth/presentation/screens/role_selection_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/doctor/data/models/doctor_model.dart';
 import '../../features/doctor/presentation/screens/doctor_detail_screen.dart';
@@ -49,6 +50,8 @@ class AppRouter {
         return _buildFadeRoute(const ForgotPasswordScreen(), settings);
       case AppRoutes.verifyEmail:
         return _buildFadeRoute(const EmailVerificationScreen(), settings);
+      case AppRoutes.roleSelection:
+        return _buildFadeRoute(const RoleSelectionScreen(), settings);
       case AppRoutes.dashboard:
         return _buildFadeRoute(const DashboardScreen(), settings);
       case AppRoutes.doctorDetail:
@@ -127,19 +130,23 @@ class AdminGuard extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.currentUser;
 
-    if (user != null && user.role == 'Admin') {
+    final isAuthorized = user != null && 
+        user.email == 'hemanthkodi6@gmail.com' && 
+        user.role == 'Admin';
+
+    if (isAuthorized) {
       return child;
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('You are not authorized to access this page.'),
+          content: Text('Access Denied: Unauthorized admin access.'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
       );
-      Navigator.of(context).pop();
+      Navigator.of(context).pushReplacementNamed(AppRoutes.authWrapper);
     });
 
     return const Scaffold(

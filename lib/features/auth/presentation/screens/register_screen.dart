@@ -25,7 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscureConfirmPassword = true;
   
   String _selectedRole = 'Patient';
-  final List<String> _roles = ['Patient', 'Doctor', 'Receptionist', 'Admin'];
+  final List<String> _roles = ['Patient', 'Doctor', 'Receptionist'];
 
   @override
   void dispose() {

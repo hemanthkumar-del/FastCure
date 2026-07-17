@@ -8,6 +8,7 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
   static const String forgotPassword = '/forgot-password';
   static const String verifyEmail = '/verify-email';
+  static const String roleSelection = '/role-selection';
   
   static const String doctorDetail = '/doctor/detail';
   static const String doctorAddEdit = '/doctor/edit';

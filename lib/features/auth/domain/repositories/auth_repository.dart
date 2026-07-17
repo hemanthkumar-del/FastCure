@@ -30,4 +30,7 @@ abstract class AuthRepository {
 
   /// Gets the currently authenticated user's model from Firestore.
   Future<UserModel?> getCurrentUser();
+
+  /// Creates or updates a Firestore user profile document.
+  Future<void> createUserProfile(UserModel user);
 }

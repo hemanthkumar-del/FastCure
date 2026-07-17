@@ -24,7 +24,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final theme = Theme.of(context);
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.currentUser;
-    final isAdmin = user?.role == 'Admin';
+    final isAdmin = user?.role == 'Admin' && user?.email == 'hemanthkodi6@gmail.com';
 
     // Role-based views & items
     final List<Widget> views = [];
