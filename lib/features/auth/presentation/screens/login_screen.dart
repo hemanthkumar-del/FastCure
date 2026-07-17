@@ -123,30 +123,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   children: [
                     // Header Logo Icon
                     Center(
-                      child: ClipRect(
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          heightFactor: 0.65,
-                          child: Image.asset(
-                            'assets/images/fastcure_logo.png',
-                            width: 100,
-                            fit: BoxFit.fitWidth,
-                          ),
-                        ),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        width: 90,
+                        fit: BoxFit.contain,
                       ),
                     ),
                     const SizedBox(height: 12),
-
-                    // Title
-                    Text(
-                      'FastCure',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF2563EB),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
                     Text(
                       'Your Health, Our Priority',
                       textAlign: TextAlign.center,
@@ -155,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
                     // Main Container Card
                     Container(

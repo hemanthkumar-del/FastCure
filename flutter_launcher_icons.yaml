@@ -1,6 +1,6 @@
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/fastcure_logo.png"
+  image_path: "assets/images/logo.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/fastcure_logo.png"
+  adaptive_icon_foreground: "assets/images/logo.png"

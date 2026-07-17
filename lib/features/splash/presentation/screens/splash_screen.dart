@@ -45,6 +45,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final logoWidth = screenWidth * 0.38;
+
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : Colors.white,
       body: Center(
@@ -54,36 +57,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Cropped Logo Icon Widget
-              ClipRect(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  heightFactor: 0.65, // Crop to show only the top icon portion
-                  child: Image.asset(
-                    'assets/images/fastcure_logo.png',
-                    width: 180,
-                    fit: BoxFit.fitWidth,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // App Name Text
-              Text(
-                'FastCure',
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF2563EB), // Brand Primary Blue
-                    ),
-              ),
-              const SizedBox(height: 12),
-              // Caption Text
-              Text(
-                'CARE • COMPASSION • CURE',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF14B8A6), // Brand Secondary Teal
-                    ),
+              Image.asset(
+                'assets/images/logo.png',
+                width: logoWidth,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 64),
               // Loading Progress
