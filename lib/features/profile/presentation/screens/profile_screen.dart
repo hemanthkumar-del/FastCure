@@ -1,8 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -138,42 +142,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 Center(
                   child: Column(
                     children: [
-                      Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 54,
-                            backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
-                            backgroundImage: user?.photoUrl != null && user!.photoUrl!.isNotEmpty
-                                ? NetworkImage(user.photoUrl!)
-                                : null,
-                            child: user?.photoUrl == null || user!.photoUrl!.isEmpty
-                                ? Text(
-                                    (user?.fullName ?? 'U').substring(0, 1).toUpperCase(),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 36,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF2563EB),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                        ],
+                      UserAvatar(
+                        photoUrl: user?.photoUrl,
+                        radius: 54,
+                        name: user?.fullName ?? 'U',
+                        showCameraIcon: true,
+                        heroTag: 'profile_picture_hero',
+                        onTap: _showAvatarOptions,
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -409,6 +384,220 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
       ),
     );
+  }
+
+  void _showAvatarOptions() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    final hasPhoto = user?.photoUrl != null && user!.photoUrl!.isNotEmpty;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (hasPhoto)
+                ListTile(
+                  leading: const Icon(Icons.photo_outlined),
+                  title: const Text('View Photo'),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PhotoViewScreen(
+                          photoUrl: user.photoUrl!,
+                          name: user.fullName,
+                          heroTag: 'profile_picture_hero',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickAndUploadImage();
+                },
+              ),
+              if (hasPhoto)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                  title: const Text('Remove Photo', style: TextStyle(color: Colors.red)),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _removeImage();
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.close_rounded),
+                title: const Text('Cancel'),
+                onTap: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final permissionGranted = await _checkAndRequestPermission();
+    if (!permissionGranted) return;
+
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+      maxWidth: 1024,
+      maxHeight: 1024,
+    );
+
+    if (pickedFile == null) return;
+
+    // Show progress overlay dialog
+    _showUploadProgressDialog();
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.uploadProfilePicture(pickedFile.path);
+
+    if (mounted) {
+      Navigator.of(context).pop(); // Close progress dialog
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile picture updated successfully.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage ?? 'Upload failed.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showUploadProgressDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Consumer<AuthProvider>(
+          builder: (context, authProvider, _) {
+            final progress = authProvider.uploadProgress ?? 0.0;
+            return AlertDialog(
+              title: const Text('Uploading Photo'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  LinearProgressIndicator(value: progress),
+                  const SizedBox(height: 16),
+                  Text('${(progress * 100).toInt()}% uploaded'),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<bool> _checkAndRequestPermission() async {
+    Permission permission = Permission.storage;
+    if (Platform.isAndroid) {
+      final sdkMatch = RegExp(r'SDK\s+(\d+)').firstMatch(Platform.operatingSystemVersion);
+      final sdkInt = sdkMatch != null ? int.tryParse(sdkMatch.group(1) ?? '') : null;
+      if (sdkInt != null && sdkInt >= 33) {
+        permission = Permission.photos;
+      } else {
+        permission = Permission.storage;
+      }
+    } else {
+      permission = Permission.photos;
+    }
+
+    final status = await permission.status;
+    if (status.isGranted) {
+      return true;
+    } else if (status.isPermanentlyDenied) {
+      _showPermanentlyDeniedDialog();
+      return false;
+    } else {
+      final requestStatus = await permission.request();
+      if (requestStatus.isGranted) {
+        return true;
+      } else if (requestStatus.isPermanentlyDenied) {
+        _showPermanentlyDeniedDialog();
+        return false;
+      }
+      return false;
+    }
+  }
+
+  void _showPermanentlyDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Permission Required'),
+          content: const Text(
+            'FastCure requires access to your device gallery to select a profile picture. '
+            'Please enable this permission in the application settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                openAppSettings();
+              },
+              child: const Text('Open App Settings'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _removeImage() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final success = await authProvider.removeProfilePicture();
+
+    if (mounted) {
+      Navigator.of(context).pop(); // Close progress dialog
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile picture removed.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage ?? 'Failed to remove photo.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildStaticItem(String label, String value, IconData icon, bool isDark) {

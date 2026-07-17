@@ -11,6 +11,7 @@ import '../../../doctor/presentation/providers/doctor_provider.dart';
 import '../../../doctor/presentation/screens/doctor_list_screen.dart';
 import '../../../patient/presentation/providers/patient_provider.dart';
 import '../../../prescription/presentation/widgets/prescription_list_view.dart';
+import '../../../../core/widgets/user_avatar.dart';
 
 class DashboardHomeView extends StatefulWidget {
   final Function(int)? onTabSelected;
@@ -127,6 +128,7 @@ class _DashboardHomeViewState extends State<DashboardHomeView> with SingleTicker
   // PATIENT DASHBOARD LAYOUT
   // ----------------------------------------------------
   Widget _buildPatientDashboard(BuildContext context, ThemeData theme, bool isDark, String userName) {
+    final user = Provider.of<AuthProvider>(context).currentUser;
     final appProv = Provider.of<AppointmentProvider>(context);
     final upcomingApps = appProv.allAppointments
         .where((a) => a.date.isAfter(DateTime.now().subtract(const Duration(hours: 2))))
@@ -144,17 +146,10 @@ class _DashboardHomeViewState extends State<DashboardHomeView> with SingleTicker
             position: _slideHeader,
             child: Row(
               children: [
-                CircleAvatar(
+                UserAvatar(
+                  photoUrl: user?.photoUrl,
                   radius: 26,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
-                  child: Text(
-                    userName.substring(0, 1).toUpperCase(),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
+                  name: userName,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

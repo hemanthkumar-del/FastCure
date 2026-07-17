@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/user_model.dart';
@@ -14,6 +17,8 @@ class AuthProvider extends ChangeNotifier {
   bool _isInitialized = false;
   String? _errorMessage;
   StreamSubscription<UserModel?>? _authSubscription;
+  bool _isUploading = false;
+  double? _uploadProgress;
 
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
@@ -21,6 +26,8 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _currentUser != null;
   bool get isEmailVerified => _currentUser?.isVerified ?? false;
+  bool get isUploading => _isUploading;
+  double? get uploadProgress => _uploadProgress;
 
   AuthProvider(this._authRepository) {
     _init();
@@ -261,6 +268,139 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
+  Future<bool> uploadProfilePicture(String filePath) async {
+    if (_currentUser == null) return false;
+    
+    _isLoading = true;
+    _isUploading = true;
+    _uploadProgress = 0.0;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final file = File(filePath);
+      if (!await file.exists()) {
+        throw Exception('File does not exist at path: $filePath');
+      }
+
+      final sizeInBytes = await file.length();
+      if (sizeInBytes > 5 * 1024 * 1024) {
+        throw Exception('Image size exceeds the 5 MB limit.');
+      }
+
+      final uid = _currentUser!.uid;
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profile_pictures')
+          .child('$uid.jpg');
+
+      final uploadTask = storageRef.putFile(
+        file,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+
+      final progressCompleter = Completer<void>();
+      late StreamSubscription<TaskSnapshot> subscription;
+      
+      subscription = uploadTask.snapshotEvents.listen(
+        (snapshot) {
+          final progress = snapshot.bytesTransferred / snapshot.totalBytes;
+          _uploadProgress = progress.clamp(0.0, 1.0);
+          notifyListeners();
+        },
+        onError: (e) {
+          progressCompleter.completeError(e);
+        },
+        onDone: () {
+          progressCompleter.complete();
+        },
+      );
+
+      await uploadTask.whenComplete(() {}).timeout(
+        const Duration(seconds: 60),
+        onTimeout: () {
+          throw TimeoutException('Upload timed out. Please check your network connection.');
+        },
+      );
+      await progressCompleter.future;
+      await subscription.cancel();
+
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .update({'photoUrl': downloadUrl});
+
+      final updatedUser = _currentUser!.copyWith(photoUrl: downloadUrl);
+      _currentUser = updatedUser;
+      await _saveLocalUser(updatedUser);
+
+      _uploadProgress = null;
+      _isUploading = false;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      _uploadProgress = null;
+      _isUploading = false;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> removeProfilePicture() async {
+    if (_currentUser == null) return false;
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final uid = _currentUser!.uid;
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profile_pictures')
+          .child('$uid.jpg');
+
+      try {
+        await storageRef.delete();
+      } catch (e) {
+        AppLogger.warning('Profile picture delete from storage failed/ignored: $e');
+      }
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .update({'photoUrl': null});
+
+      _currentUser = UserModel(
+        uid: _currentUser!.uid,
+        fullName: _currentUser!.fullName,
+        email: _currentUser!.email,
+        role: _currentUser!.role,
+        photoUrl: null,
+        phoneNumber: _currentUser!.phoneNumber,
+        createdAt: _currentUser!.createdAt,
+        isVerified: _currentUser!.isVerified,
+        lastLogin: _currentUser!.lastLogin,
+      );
+
+      await _saveLocalUser(_currentUser!);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
 
   Future<void> signOut() async {
     _isLoading = true;
