@@ -139,6 +139,19 @@ To run the project from source, ensure you have the following configured:
 
 ---
 
+## 🤖 Release Automation
+
+FastCure incorporates automated release management using GitHub Actions:
+* **Trigger**: Pushing a version tag matching `v*` (e.g., `v2.0.1`) automatically initiates the release workflow.
+* **Pipeline Execution**:
+  1. Checks out repository, configures JDK 17, and sets up Flutter Stable.
+  2. Resolves dependencies and runs static analysis (`flutter analyze`).
+  3. Builds the production-signed `app-release.apk`.
+  4. Computes the SHA-256 checksum and saves it to a sidecar file (`app-release.apk.sha256`).
+  5. Dynamically publishes/updates the GitHub Release for that tag, attaching the APK and checksum files, and automatically generating change logs from commit history.
+
+---
+
 ## 🔮 Future Improvements
 * [ ] **Biometric Sign-In**: Integration of FaceID and fingerprint sensors for quick access.
 * [ ] **Video Consultation**: Real-time WebRTC channels for video calls between doctors and patients.
