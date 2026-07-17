@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../dashboard/presentation/screens/dashboard_screen.dart';
 import '../providers/auth_provider.dart';
+import 'email_verification_screen.dart';
 import 'login_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
@@ -22,7 +23,11 @@ class AuthWrapper extends StatelessWidget {
 
     // Direct routing
     if (authProvider.isAuthenticated) {
-      return const DashboardScreen();
+      if (authProvider.isEmailVerified) {
+        return const DashboardScreen();
+      } else {
+        return const EmailVerificationScreen();
+      }
     } else {
       return const LoginScreen();
     }

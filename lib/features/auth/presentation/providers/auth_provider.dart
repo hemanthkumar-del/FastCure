@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/user_model.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../../../core/utils/logger.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository;
@@ -21,12 +23,82 @@ class AuthProvider extends ChangeNotifier {
   bool get isEmailVerified => _currentUser?.isVerified ?? false;
 
   AuthProvider(this._authRepository) {
-    // Listen to Firebase Auth state updates for automatic login & persistence
-    _authSubscription = _authRepository.onAuthStateChanged.listen((user) {
-      _currentUser = user;
+    _init();
+  }
+
+  Future<void> _init() async {
+    try {
+      final cachedUser = await _loadLocalUser();
+      final firebaseCurrentUser = fb.FirebaseAuth.instance.currentUser;
+      
+      if (firebaseCurrentUser != null && cachedUser != null && firebaseCurrentUser.uid == cachedUser.uid) {
+        _currentUser = cachedUser;
+      } else if (firebaseCurrentUser == null) {
+        await _clearLocalUser();
+        _currentUser = null;
+      }
+    } catch (e) {
+      AppLogger.error('Shared preferences auth initialization error: $e');
+    } finally {
+      _isInitialized = true;
+      notifyListeners();
+    }
+
+    _authSubscription = _authRepository.onAuthStateChanged.listen((user) async {
+      if (user != null) {
+        if (_currentUser != null && _currentUser!.uid == user.uid && _currentUser!.role != 'Patient' && user.role == 'Patient') {
+          user = user.copyWith(role: _currentUser!.role);
+        }
+        _currentUser = user;
+        await _saveLocalUser(user);
+      } else {
+        _currentUser = null;
+        await _clearLocalUser();
+      }
       _isInitialized = true;
       notifyListeners();
     });
+  }
+
+  Future<void> _saveLocalUser(UserModel user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('cached_user_role', user.role);
+    await prefs.setString('cached_user_uid', user.uid);
+    await prefs.setString('cached_user_email', user.email);
+    await prefs.setString('cached_user_name', user.fullName);
+    await prefs.setBool('cached_user_verified', user.isVerified);
+    if (user.photoUrl != null) {
+      await prefs.setString('cached_user_photo', user.photoUrl!);
+    } else {
+      await prefs.remove('cached_user_photo');
+    }
+  }
+
+  Future<void> _clearLocalUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('cached_user_role');
+    await prefs.remove('cached_user_uid');
+    await prefs.remove('cached_user_email');
+    await prefs.remove('cached_user_name');
+    await prefs.remove('cached_user_verified');
+    await prefs.remove('cached_user_photo');
+  }
+
+  Future<UserModel?> _loadLocalUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final uid = prefs.getString('cached_user_uid');
+    final role = prefs.getString('cached_user_role');
+    if (uid != null && role != null) {
+      return UserModel(
+        uid: uid,
+        role: role,
+        email: prefs.getString('cached_user_email') ?? '',
+        fullName: prefs.getString('cached_user_name') ?? '',
+        isVerified: prefs.getBool('cached_user_verified') ?? false,
+        photoUrl: prefs.getString('cached_user_photo'),
+      );
+    }
+    return null;
   }
 
   @override
@@ -47,6 +119,9 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       _currentUser = await _authRepository.signInWithEmail(email, password);
+      if (_currentUser != null) {
+        await _saveLocalUser(_currentUser!);
+      }
       _isLoading = false;
       notifyListeners();
       return true;
@@ -77,6 +152,9 @@ class AuthProvider extends ChangeNotifier {
         role: role,
         phoneNumber: phoneNumber,
       );
+      if (_currentUser != null) {
+        await _saveLocalUser(_currentUser!);
+      }
       _isLoading = false;
       notifyListeners();
       return true;
@@ -95,6 +173,9 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       _currentUser = await _authRepository.signInWithGoogle();
+      if (_currentUser != null) {
+        await _saveLocalUser(_currentUser!);
+      }
       _isLoading = false;
       notifyListeners();
       return _currentUser != null;
@@ -145,6 +226,9 @@ class AuthProvider extends ChangeNotifier {
       if (user != null) {
         await user.reload();
         _currentUser = await _authRepository.getCurrentUser();
+        if (_currentUser != null) {
+          await _saveLocalUser(_currentUser!);
+        }
         notifyListeners();
       }
     } catch (e) {
@@ -161,6 +245,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _authRepository.signOut();
       _currentUser = null;
+      await _clearLocalUser();
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
