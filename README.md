@@ -81,6 +81,22 @@ lib/
 
 ---
 
+## 📸 Screenshots
+
+| Splash Screen | Login Screen | Patient Dashboard |
+| :-: | :-: | :-: |
+| ![Splash Screen](assets/screenshots/splash.png) | ![Login Screen](assets/screenshots/login.png) | ![Patient Dashboard](assets/screenshots/dashboard.png) |
+
+| Doctor Directory | Appointment Details | Prescription Screen |
+| :-: | :-: | :-: |
+| ![Doctor Directory](assets/screenshots/doctors.png) | ![Appointment Details](assets/screenshots/appointment.png) | ![Prescription Screen](assets/screenshots/prescription.png) |
+
+| Profile Screen | AI Assistant | Admin Dashboard |
+| :-: | :-: | :-: |
+| ![Profile Screen](assets/screenshots/profile.png) | ![AI Assistant](assets/screenshots/ai_assistant.png) | ![Admin Dashboard](assets/screenshots/admin_dashboard.png) |
+
+---
+
 ## 📲 APK Installation Guide
 
 ### 📦 APK Download
