@@ -4,14 +4,14 @@ class AppColors {
   AppColors._();
 
   // Healthcare Palette Colors
-  static const Color primaryBlue = Color(0xFF0284C7);      // Clinical Blue
-  static const Color secondaryEmerald = Color(0xFF10B981);  // Emerald Green
-  static const Color tertiarySlate = Color(0xFF0F172A);     // Slate Gray
-  static const Color alertCoral = Color(0xFFEF4444);        // Error Coral
+  static const Color primaryBlue = Color(0xFF2563EB);      // New Clinical Blue (#2563EB)
+  static const Color secondaryEmerald = Color(0xFF14B8A6);  // New Secondary Teal (#14B8A6)
+  static const Color accentGreen = Color(0xFF10B981);       // Accent Emerald (#10B981)
+  static const Color alertCoral = Color(0xFFEF4444);        // Error Coral (#EF4444)
 
   // Light Theme Colors
-  static const Color lightBg = Color(0xFFF8FAFC);
-  static const Color lightSurface = Color(0xFFFFFFFF);
+  static const Color lightBg = Color(0xFFF8FAFC);          // Background (#F8FAFC)
+  static const Color lightSurface = Color(0xFFFFFFFF);     // Card/Surface (#FFFFFF)
   static const Color lightTextPrimary = Color(0xFF0F172A);
   static const Color lightTextSecondary = Color(0xFF475569);
   static const Color lightTextHint = Color(0xFF94A3B8);
@@ -30,37 +30,41 @@ class AppColors {
     brightness: Brightness.light,
     primary: primaryBlue,
     onPrimary: Colors.white,
-    primaryContainer: Color(0xFFE0F2FE),
-    onPrimaryContainer: Color(0xFF0369A1),
+    primaryContainer: Color(0xFFDBEAFE),
+    onPrimaryContainer: Color(0xFF1E40AF),
     secondary: secondaryEmerald,
     onSecondary: Colors.white,
-    secondaryContainer: Color(0xFFD1FAE5),
-    onSecondaryContainer: Color(0xFF047857),
-    tertiary: Color(0xFF0F172A),
+    secondaryContainer: Color(0xFFCCFBF1),
+    onSecondaryContainer: Color(0xFF115E59),
+    tertiary: accentGreen,
     onTertiary: Colors.white,
     error: alertCoral,
     onError: Colors.white,
-    surface: lightSurface,
+    surface: lightSurface,          // Card/Dialog background (#FFFFFF)
     onSurface: lightTextPrimary,
+    background: lightBg,            // Scaffold background (#F8FAFC)
+    onBackground: lightTextPrimary,
     outline: lightBorder,
   );
 
   static const ColorScheme darkScheme = ColorScheme(
     brightness: Brightness.dark,
-    primary: Color(0xFF38BDF8),
-    onPrimary: Color(0xFF0369A1),
-    primaryContainer: Color(0xFF0C4A6E),
-    onPrimaryContainer: Color(0xFFE0F2FE),
-    secondary: Color(0xFF34D399),
-    onSecondary: Color(0xFF047857),
-    secondaryContainer: Color(0xFF064E3B),
-    onSecondaryContainer: Color(0xFFD1FAE5),
-    tertiary: Color(0xFFE2E8F0),
-    onTertiary: Color(0xFF0F172A),
+    primary: Color(0xFF60A5FA),
+    onPrimary: Color(0xFF1E3A8A),
+    primaryContainer: Color(0xFF1E40AF),
+    onPrimaryContainer: Color(0xFFDBEAFE),
+    secondary: Color(0xFF2DD4BF),
+    onSecondary: Color(0xFF0F766E),
+    secondaryContainer: Color(0xFF115E59),
+    onSecondaryContainer: Color(0xFFCCFBF1),
+    tertiary: Color(0xFF34D399),
+    onTertiary: Color(0xFF064E3B),
     error: Color(0xFFF87171),
     onError: Color(0xFF7F1D1D),
     surface: darkSurface,
     onSurface: darkTextPrimary,
+    background: darkBg,
+    onBackground: darkTextPrimary,
     outline: darkBorder,
   );
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/models/doctor_model.dart';
 import '../providers/doctor_provider.dart';
 
@@ -13,6 +14,8 @@ class DoctorDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final provider = Provider.of<DoctorProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isAdmin = authProvider.currentUser?.role == 'Admin';
 
     // If doctor is null, we redirect to Add/Edit screen directly
     if (doctor == null) {
@@ -33,17 +36,19 @@ class DoctorDetailScreen extends StatelessWidget {
           SliverAppBar.large(
             title: Text(doc.fullName),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.edit_rounded),
-                onPressed: () {
-                  Navigator.pushNamed(context, AppRoutes.doctorAddEdit, arguments: doc);
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline_rounded),
-                color: theme.colorScheme.error,
-                onPressed: () => _confirmDelete(context, provider, doc),
-              ),
+              if (isAdmin) ...[
+                IconButton(
+                  icon: const Icon(Icons.edit_rounded),
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.doctorAddEdit, arguments: doc);
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  color: theme.colorScheme.error,
+                  onPressed: () => _confirmDelete(context, provider, doc),
+                ),
+              ],
             ],
           ),
 

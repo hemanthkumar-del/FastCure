@@ -9,11 +9,13 @@ class AuthProvider extends ChangeNotifier {
   
   UserModel? _currentUser;
   bool _isLoading = false;
+  bool _isInitialized = false;
   String? _errorMessage;
   StreamSubscription<UserModel?>? _authSubscription;
 
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
+  bool get isInitialized => _isInitialized;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _currentUser != null;
   bool get isEmailVerified => _currentUser?.isVerified ?? false;
@@ -22,6 +24,7 @@ class AuthProvider extends ChangeNotifier {
     // Listen to Firebase Auth state updates for automatic login & persistence
     _authSubscription = _authRepository.onAuthStateChanged.listen((user) {
       _currentUser = user;
+      _isInitialized = true;
       notifyListeners();
     });
   }

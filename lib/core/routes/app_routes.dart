@@ -2,6 +2,7 @@ class AppRoutes {
   AppRoutes._();
 
   static const String splash = '/';
+  static const String authWrapper = '/auth-wrapper';
   static const String login = '/login';
   static const String register = '/register';
   static const String dashboard = '/dashboard';
@@ -14,6 +15,7 @@ class AppRoutes {
   static const String patientAddEdit = '/patient/edit';
   static const String patientList = '/patient/list';
   static const String appointmentBook = '/appointment/book';
+  static const String appointmentDetail = '/appointment/detail';
   static const String medicineList = '/medicine/list';
   static const String prescriptionDetail = '/prescription/detail';
   static const String prescriptionAddEdit = '/prescription/edit';

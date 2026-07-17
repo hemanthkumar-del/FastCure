@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/widgets/loading_indicator.dart';
@@ -34,6 +35,7 @@ class _AppointmentListViewState extends State<AppointmentListView> {
     final theme = Theme.of(context);
     final provider = Provider.of<AppointmentProvider>(context);
     final list = provider.calendarAppointments;
+    final isAdmin = Provider.of<AuthProvider>(context, listen: false).currentUser?.role == 'Admin';
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
@@ -69,7 +71,7 @@ class _AppointmentListViewState extends State<AppointmentListView> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => provider.loadAppointments(),
-              child: _buildListContent(provider, list, theme),
+              child: _buildListContent(provider, list, theme, isAdmin),
             ),
           ),
         ],
@@ -77,7 +79,7 @@ class _AppointmentListViewState extends State<AppointmentListView> {
     );
   }
 
-  Widget _buildListContent(AppointmentProvider provider, List<AppointmentModel> list, ThemeData theme) {
+  Widget _buildListContent(AppointmentProvider provider, List<AppointmentModel> list, ThemeData theme, bool isAdmin) {
     if (provider.isLoading) {
       return const Center(child: LoadingIndicator(message: 'Syncing schedule...'));
     }
@@ -116,9 +118,18 @@ class _AppointmentListViewState extends State<AppointmentListView> {
 
         return Card(
           margin: const EdgeInsets.only(bottom: 16.0),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.appointmentDetail,
+                arguments: app,
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header row: Patient / Doc
@@ -191,46 +202,49 @@ class _AppointmentListViewState extends State<AppointmentListView> {
                 ],
 
                 // Action Buttons for Approval Flow
-                if (isPending) ...[
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: () => provider.rejectAppointment(app.appointmentId),
-                        icon: const Icon(Icons.close_rounded, size: 16),
-                        label: const Text('Reject'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: theme.colorScheme.error,
-                          side: BorderSide(color: theme.colorScheme.error),
+                if (isAdmin) ...[
+                  if (isPending) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () => provider.rejectAppointment(app.appointmentId),
+                          icon: const Icon(Icons.close_rounded, size: 16),
+                          label: const Text('Reject'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: theme.colorScheme.error,
+                            side: BorderSide(color: theme.colorScheme.error),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () => provider.approveAppointment(app.appointmentId),
-                        icon: const Icon(Icons.check_rounded, size: 16),
-                        label: const Text('Approve'),
-                      ),
-                    ],
-                  ),
-                ] else if (app.status == 'Approved') ...[
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton.icon(
-                        onPressed: () => provider.cancelAppointment(app.appointmentId),
-                        icon: const Icon(Icons.cancel_rounded, size: 16),
-                        label: const Text('Cancel Appointment'),
-                        style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () => provider.approveAppointment(app.appointmentId),
+                          icon: const Icon(Icons.check_rounded, size: 16),
+                          label: const Text('Approve'),
+                        ),
+                      ],
+                    ),
+                  ] else if (app.status == 'Approved') ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () => provider.cancelAppointment(app.appointmentId),
+                          icon: const Icon(Icons.cancel_rounded, size: 16),
+                          label: const Text('Cancel Appointment'),
+                          style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ],
             ),
           ),
-        );
+        ),
+      );
       },
     );
   }

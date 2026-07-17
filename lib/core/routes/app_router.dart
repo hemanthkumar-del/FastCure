@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/appointment/presentation/screens/book_appointment_screen.dart';
+import '../../features/appointment/data/models/appointment_model.dart';
+import '../../features/appointment/presentation/screens/appointment_detail_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/email_verification_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/auth_wrapper.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/doctor/data/models/doctor_model.dart';
@@ -34,6 +39,8 @@ class AppRouter {
     switch (settings.name) {
       case AppRoutes.splash:
         return _buildFadeRoute(const SplashScreen(), settings);
+      case AppRoutes.authWrapper:
+        return _buildFadeRoute(const AuthWrapper(), settings);
       case AppRoutes.login:
         return _buildFadeRoute(const LoginScreen(), settings);
       case AppRoutes.register:
@@ -49,35 +56,38 @@ class AppRouter {
         return _buildFadeRoute(DoctorDetailScreen(doctor: doctor), settings);
       case AppRoutes.doctorAddEdit:
         final doctor = settings.arguments as DoctorModel?;
-        return _buildFadeRoute(AddEditDoctorScreen(doctor: doctor), settings);
+        return _buildFadeRoute(AdminGuard(child: AddEditDoctorScreen(doctor: doctor)), settings);
       case AppRoutes.patientProfile:
         final patient = settings.arguments as PatientModel?;
         return _buildFadeRoute(PatientProfileScreen(patient: patient), settings);
       case AppRoutes.patientAddEdit:
         final patient = settings.arguments as PatientModel?;
-        return _buildFadeRoute(AddEditPatientScreen(patient: patient), settings);
+        return _buildFadeRoute(AdminGuard(child: AddEditPatientScreen(patient: patient)), settings);
       case AppRoutes.patientList:
-        return _buildFadeRoute(const PatientListScreen(), settings);
+        return _buildFadeRoute(const AdminGuard(child: PatientListScreen()), settings);
       case AppRoutes.appointmentBook:
         return _buildFadeRoute(const BookAppointmentScreen(), settings);
+      case AppRoutes.appointmentDetail:
+        final appointment = settings.arguments as AppointmentModel;
+        return _buildFadeRoute(AppointmentDetailScreen(appointment: appointment), settings);
       case AppRoutes.medicineList:
         return _buildFadeRoute(const MedicineListScreen(), settings);
       case AppRoutes.prescriptionDetail:
         final prescription = settings.arguments as PrescriptionModel?;
         return _buildFadeRoute(PrescriptionDetailScreen(prescription: prescription), settings);
       case AppRoutes.prescriptionAddEdit:
-        return _buildFadeRoute(const AddEditPrescriptionScreen(), settings);
+        return _buildFadeRoute(const AdminGuard(child: AddEditPrescriptionScreen()), settings);
       case AppRoutes.billList:
-        return _buildFadeRoute(const BillListScreen(), settings);
+        return _buildFadeRoute(const AdminGuard(child: BillListScreen()), settings);
       case AppRoutes.billDetail:
         final bill = settings.arguments as BillModel?;
-        return _buildFadeRoute(BillDetailScreen(bill: bill), settings);
+        return _buildFadeRoute(AdminGuard(child: BillDetailScreen(bill: bill)), settings);
       case AppRoutes.billGenerate:
-        return _buildFadeRoute(const GenerateBillScreen(), settings);
+        return _buildFadeRoute(const AdminGuard(child: GenerateBillScreen()), settings);
       case AppRoutes.aiChat:
         return _buildFadeRoute(const AIChatScreen(), settings);
       case AppRoutes.settings:
-        return _buildFadeRoute(const SettingsScreen(), settings);
+        return _buildFadeRoute(const AdminGuard(child: SettingsScreen()), settings);
       case AppRoutes.notifications:
         return _buildFadeRoute(const NotificationsScreen(), settings);
       case AppRoutes.profile:
@@ -104,6 +114,38 @@ class AppRouter {
         );
       },
       transitionDuration: const Duration(milliseconds: 250),
+    );
+  }
+}
+
+class AdminGuard extends StatelessWidget {
+  final Widget child;
+  const AdminGuard({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+
+    if (user != null && user.role == 'Admin') {
+      return child;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You are not authorized to access this page.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      Navigator.of(context).pop();
+    });
+
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }

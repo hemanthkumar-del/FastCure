@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
 import '../../../../core/widgets/loading_indicator.dart';
@@ -38,15 +39,19 @@ class _PrescriptionListViewState extends State<PrescriptionListView> {
     final theme = Theme.of(context);
     final provider = Provider.of<PrescriptionProvider>(context);
     final list = provider.prescriptions;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isAdmin = authProvider.currentUser?.role == 'Admin';
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.pushNamed(context, AppRoutes.prescriptionAddEdit);
-        },
-        icon: const Icon(Icons.note_add_rounded),
-        label: const Text('New Rx'),
-      ),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.prescriptionAddEdit);
+              },
+              icon: const Icon(Icons.note_add_rounded),
+              label: const Text('New Rx'),
+            )
+          : null,
       body: Column(
         children: [
           // Search box
