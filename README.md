@@ -4,6 +4,7 @@
 [![Firebase Integration](https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-orange?logo=firebase)](https://firebase.google.com)
 [![Platform Support](https://img.shields.io/badge/Platform-Android-green?logo=android)](https://www.android.com)
 [![GitHub Release](https://img.shields.io/badge/Release-v2.0.0-teal?logo=github)](https://github.com/hemanthkumar-del/FastCure/releases/tag/v2.0.0)
+[![Flutter CI Pipeline](https://github.com/hemanthkumar-del/FastCure/actions/workflows/flutter-ci.yml/badge.svg)](https://github.com/hemanthkumar-del/FastCure/actions/workflows/flutter-ci.yml)
 
 FastCure is a premium, feature-rich modern healthcare application designed to bridge the gap between patients, doctors, and clinics. Built on top of **Flutter** and **Firebase**, FastCure v2.0 introduces a state-of-the-art Material 3 design system, integrated clinical AI tools, secure Role-Based Access Control (RBAC), automatic session persistence, and real-time clinical document compiling (PDF prescription building and sharing).
 
